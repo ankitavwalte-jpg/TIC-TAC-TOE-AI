@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tic-Tac-Toe AI</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 5px;
+      background-color: white;
+      padding: 5px;
+    }
+
+    .cell {
+      background-color: black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 48px;
+      cursor: pointer;
+      color: white;
+      border: 2px solid white;
+    }
+
+    .cell.taken {
+      cursor: not-allowed;
+    }
+
+    .status {
+      position: absolute;
+      top: 20px;
+      font-size: 24px;
+      text-align: center;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: white;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div class="status" id="status">Your Turn (X)</div>
+
+<div class="board" id="board"></div>
+
+<script>
+  const boardElement = document.getElementById("board");
+  const statusElement = document.getElementById("status");
+
+  let board = ["", "", "", "", "", "", "", "", ""];
+  let isGameOver = false;
+
+  function renderBoard() {
+    boardElement.innerHTML = "";
+    board.forEach((cell, index) => {
+      const div = document.createElement("div");
+      div.className = "cell";
+      div.innerText = cell;
+      if (cell !== "") div.classList.add("taken");
+      div.addEventListener("click", () => playerMove(index));
+      boardElement.appendChild(div);
+    });
+  }
+
+  function playerMove(index) {
+    if (board[index] === "" && !isGameOver) {
+      board[index] = "X";
+      renderBoard();
+      if (checkWinner(board, "X")) {
+        statusElement.innerText = "You Win!";
+        isGameOver = true;
+        return;
+      } else if (isDraw(board)) {
+        statusElement.innerText = "Draw!";
+        isGameOver = true;
+        return;
+      }
+      statusElement.innerText = "AI Thinking...";
+      setTimeout(aiMove, 500);
+    }
+  }
+
+  function aiMove() {
+    const bestMove = getBestMove(board);
+    board[bestMove] = "O";
+    renderBoard();
+    if (checkWinner(board, "O")) {
+      statusElement.innerText = "AI Wins!";
+      isGameOver = true;
+    } else if (isDraw(board)) {
+      statusElement.innerText = "Draw!";
+      isGameOver = true;
+    } else {
+      statusElement.innerText = "Your Turn (X)";
+    }
+  }
+
+  function checkWinner(b, player) {
+    const wins = [
+      [0,1,2], [3,4,5], [6,7,8], // rows
+      [0,3,6], [1,4,7], [2,5,8], // columns
+      [0,4,8], [2,4,6]           // diagonals
+    ];
+    return wins.some(combo => combo.every(i => b[i] === player));
+  }
+
+  function isDraw(b) {
+    return b.every(cell => cell !== "");
+  }
+
+  function getBestMove(b) {
+    let bestScore = -Infinity;
+    let move;
+    for (let i = 0; i < b.length; i++) {
+      if (b[i] === "") {
+        b[i] = "O";
+        let score = minimax(b, 0, false);
+        b[i] = "";
+        if (score > bestScore) {
+          bestScore = score;
+          move = i;
+        }
+      }
+    }
+    return move;
+  }
+
+  function minimax(b, depth, isMaximizing) {
+    if (checkWinner(b, "O")) return 10 - depth;
+    if (checkWinner(b, "X")) return depth - 10;
+    if (isDraw(b)) return 0;
+
+    if (isMaximizing) {
+      let bestScore = -Infinity;
+      for (let i = 0; i < b.length; i++) {
+        if (b[i] === "") {
+          b[i] = "O";
+          let score = minimax(b, depth + 1, false);
+          b[i] = "";
+          bestScore = Math.max(score, bestScore);
+        }
+      }
+      return bestScore;
+    } else {
+      let bestScore = Infinity;
+      for (let i = 0; i < b.length; i++) {
+        if (b[i] === "") {
+          b[i] = "X";
+          let score = minimax(b, depth + 1, true);
+          b[i] = "";
+          bestScore = Math.min(score, bestScore);
+        }
+      }
+      return bestScore;
+    }
+  }
+
+  renderBoard();
+</script>
+
+</body>
+</html>
